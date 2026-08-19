@@ -6,4 +6,4 @@ Build command: `dotnet build -c Release`
 
 Unload process is working, but there are some issues that i want to fix before publish it on NexusMod for beta-testing.
 
-P.S. SVET
+*P.S. SVET*
