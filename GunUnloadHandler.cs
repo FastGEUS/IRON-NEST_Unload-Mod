@@ -8,20 +8,16 @@ using Il2Cpp;
 namespace IronNestGunMod
 {
     /// <summary>
-    /// FIX: IsReady() previously required Gun.CanFire && Gun.PowderCharges > 0.
-    /// Confirmed via on-screen diagnostic (CanFire=True Powder=0 while the
-    /// gun was actually fully loaded and fired fine in-game) that
-    /// Gun.CanFire is ALREADY the authoritative "ready to fire" signal from
-    /// the game itself — Gun.PowderCharges apparently isn't kept in sync by
-    /// the normal manual reload flow (it's a field we ourselves zeroed via
-    /// SetPowderCharge(0) during a previous unload, and manual charge
-    /// loading through the physical dispenser levers doesn't necessarily
-    /// write back to this exact field). We now rely on CanFire alone.
+    /// CONFIRMED via diagnostic log: PowderController.currentSelectedCharges
+    /// correctly tracks what the player physically dispenses via the levers
+    /// (it read 3 after a real reload), while Gun.PowderCharges — the field
+    /// ballistics actually reads at fire time — stayed stuck at 0 and never
+    /// re-synced on its own after our unload sequence.
     ///
-    /// For restoring powder to the inventory on unload, we no longer trust
-    /// Gun.PowderCharges either — we prefer PowderController.currentSelectedCharges
-    /// (the actual charge count tracked by the physical dispenser system),
-    /// falling back to Gun.PowderCharges only if that's unavailable.
+    /// Fix: continuously (but cheaply — only on mismatch) sync
+    /// Gun.PowderCharges to match PowderController.currentSelectedCharges,
+    /// via the public SyncPowderCharges() method called every frame from
+    /// UnloadButtonsUI.OnGUI().
     /// </summary>
     public class GunUnloadHandler
     {
@@ -39,6 +35,34 @@ namespace IronNestGunMod
                 return false;
 
             return Gun.CanFire;
+        }
+
+        /// <summary>
+        /// Keeps Gun.PowderCharges (what ballistics reads) in sync with
+        /// PowderController.currentSelectedCharges (what the player actually
+        /// dispensed via the levers). Only writes when there's a real
+        /// mismatch, to avoid spamming SetPowderCharge() every frame.
+        /// </summary>
+        public void SyncPowderCharges()
+        {
+            if (Gun == null || PowderController == null)
+                return;
+
+            int desired = PowderController.currentSelectedCharges;
+            int current = Gun.PowderCharges;
+
+            if (desired != current)
+            {
+                try
+                {
+                    Gun.SetPowderCharge(desired);
+                    MelonLogger.Msg($"[GunUnloadHandler:{Label}] Synced Gun.PowderCharges {current} -> {desired} (from PowderController.currentSelectedCharges).");
+                }
+                catch (Exception e)
+                {
+                    MelonLogger.Msg($"[GunUnloadHandler:{Label}] SyncPowderCharges SetPowderCharge threw: {e}");
+                }
+            }
         }
 
         public void TriggerUnload()
@@ -59,7 +83,7 @@ namespace IronNestGunMod
             }
             ShellDefinition shellDef = ExtractShellDefinition(chamberedBlueprint);
 
-            MelonLogger.Msg($"[GunUnloadHandler:{Label}] Unloading with chargesBeforeUnload={chargesBeforeUnload} (Gun.PowderCharges={Gun.PowderCharges}, PowderController.currentSelectedCharges={PowderController?.currentSelectedCharges}).");
+            MelonLogger.Msg($"[GunUnloadHandler:{Label}] Unloading with chargesBeforeUnload={chargesBeforeUnload}.");
 
             try { ReloadController.ForceResetStateToInitial(); }
             catch (Exception e)
@@ -79,12 +103,6 @@ namespace IronNestGunMod
                 MelonLogger.Msg($"[GunUnloadHandler:{Label}] Clearing chamberedShell threw: {e}");
             }
 
-            try { Gun.SetPowderCharge(0); }
-            catch (Exception e)
-            {
-                MelonLogger.Msg($"[GunUnloadHandler:{Label}] SetPowderCharge(0) threw: {e}");
-            }
-
             try { Gun.pendingReload = true; } catch (Exception e) { MelonLogger.Msg($"[GunUnloadHandler:{Label}] Setting pendingReload=true threw: {e}"); }
             try { Gun.hasFired = false; } catch (Exception e) { MelonLogger.Msg($"[GunUnloadHandler:{Label}] Setting hasFired=false threw: {e}"); }
 
@@ -96,11 +114,8 @@ namespace IronNestGunMod
 
             if (PowderController != null)
             {
-                try { PowderController.currentSelectedCharges = 0; } catch { }
                 try { PowderController.ResetAllUsedDispensers(); }
                 catch (Exception e) { MelonLogger.Msg($"[GunUnloadHandler:{Label}] ResetAllUsedDispensers threw: {e}"); }
-                try { PowderController.ResetAll(); }
-                catch (Exception e) { MelonLogger.Msg($"[GunUnloadHandler:{Label}] ResetAll threw: {e}"); }
             }
 
             MelonLogger.Msg($"[GunUnloadHandler:{Label}] Reset triggered. pendingReload={Gun.pendingReload}. Waiting {ResetAnimationDuration}s...");
