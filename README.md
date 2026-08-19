@@ -1,15 +1,19 @@
 # IRON-NEST Unload-Mod
 
-Build command: `dotnet build -c Release`
+**Build command:** `dotnet build -c Release`
 
-## **Current version is alpha-test.**
+## ⚠️ Current status: alpha testing
 
-Unload process is working, but there are some issues that i want to fix before publish it on NexusMod for beta-testing.
+The core unload process works, but a few issues still need to be fixed before this goes up on NexusMod for beta-testing.
 
-- [x] ~~Mod have some problems with reunloading (using unload second time)~~ 
-- [x] ~~Mod breaks calculating system and powder charges didnt work correct~~
-- [ ] Left Gun can not be unloaded until right gun ready to fire or unloading
+### Known issues
 
-*That's why i'm not publishing this mod on NexusMod. This is a repository for developing and storing versions in case of my mistakes and the need to revert to the correct version, I do not recommend downloading and building the mod until I upload it to releases or to NexusMod*
+- [x] ~~Reloading a second time after an unload was broken~~
+- [x] ~~Unloading desynced the powder charge calculation, breaking shell range~~
+- [ ] Left gun can't be unloaded while the right gun is ready to fire or mid-unload
 
-*P.S. SVET*
+---
+
+This repository exists to track development and store working versions in case a change introduces a regression and I need to roll back to a known-good build. **Do not download or build this mod until it's published in Releases or on NexusMod** — it is not ready for general use yet.
+
+*— Svet*
