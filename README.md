@@ -1,3 +1,3 @@
 # IRON-NEST---Unload-Mod
 
-Build command: 'dotnet build -c Release'
+Build command: `dotnet build -c Release`
