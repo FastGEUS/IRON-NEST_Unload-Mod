@@ -1,0 +1,13 @@
+C:\Users\svetd\Desktop\IroNest-Modding\Unload-Mod-v1.1\obj\Release\net6.0\IronNestGunMod.csproj.AssemblyReference.cache
+C:\Users\svetd\Desktop\IroNest-Modding\Unload-Mod-v1.1\obj\Release\net6.0\IronNestGunMod.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\svetd\Desktop\IroNest-Modding\Unload-Mod-v1.1\obj\Release\net6.0\IronNestGunMod.AssemblyInfoInputs.cache
+C:\Users\svetd\Desktop\IroNest-Modding\Unload-Mod-v1.1\obj\Release\net6.0\IronNestGunMod.AssemblyInfo.cs
+C:\Users\svetd\Desktop\IroNest-Modding\Unload-Mod-v1.1\obj\Release\net6.0\IronNestGunMod.csproj.CoreCompileInputs.cache
+C:\Users\svetd\Desktop\IroNest-Modding\Unload-Mod-v1.1\obj\Release\net6.0\IronNestGunMod.sourcelink.json
+C:\Users\svetd\Desktop\IroNest-Modding\Unload-Mod-v1.1\bin\Release\net6.0\IronNestGunMod.deps.json
+C:\Users\svetd\Desktop\IroNest-Modding\Unload-Mod-v1.1\bin\Release\net6.0\IronNestGunMod.dll
+C:\Users\svetd\Desktop\IroNest-Modding\Unload-Mod-v1.1\bin\Release\net6.0\IronNestGunMod.pdb
+C:\Users\svetd\Desktop\IroNest-Modding\Unload-Mod-v1.1\obj\Release\net6.0\IronNestGunMod.dll
+C:\Users\svetd\Desktop\IroNest-Modding\Unload-Mod-v1.1\obj\Release\net6.0\refint\IronNestGunMod.dll
+C:\Users\svetd\Desktop\IroNest-Modding\Unload-Mod-v1.1\obj\Release\net6.0\IronNestGunMod.pdb
+C:\Users\svetd\Desktop\IroNest-Modding\Unload-Mod-v1.1\obj\Release\net6.0\ref\IronNestGunMod.dll
