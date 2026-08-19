@@ -8,14 +8,20 @@ using Il2Cpp;
 namespace IronNestGunMod
 {
     /// <summary>
-    /// Full "abort and reset to pre-load state":
-    ///  - Reload FSM back to its initial state via ForceResetStateToInitial().
-    ///  - Animators re-synced via ResetAnimators() — this is what plays the
-    ///    ~12 second reset animation.
-    ///  - Barrel elevation reset to 0 via ResetElevation().
-    ///  - All powder dispenser levers reset via PowderController.ResetAll().
-    ///  - AFTER the ~12s animation finishes, the shell is returned to the
-    ///    cylinder and powder charges are restored (43% full / else -1).
+    /// FIX: IsReady() previously required Gun.CanFire && Gun.PowderCharges > 0.
+    /// Confirmed via on-screen diagnostic (CanFire=True Powder=0 while the
+    /// gun was actually fully loaded and fired fine in-game) that
+    /// Gun.CanFire is ALREADY the authoritative "ready to fire" signal from
+    /// the game itself — Gun.PowderCharges apparently isn't kept in sync by
+    /// the normal manual reload flow (it's a field we ourselves zeroed via
+    /// SetPowderCharge(0) during a previous unload, and manual charge
+    /// loading through the physical dispenser levers doesn't necessarily
+    /// write back to this exact field). We now rely on CanFire alone.
+    ///
+    /// For restoring powder to the inventory on unload, we no longer trust
+    /// Gun.PowderCharges either — we prefer PowderController.currentSelectedCharges
+    /// (the actual charge count tracked by the physical dispenser system),
+    /// falling back to Gun.PowderCharges only if that's unavailable.
     /// </summary>
     public class GunUnloadHandler
     {
@@ -32,19 +38,19 @@ namespace IronNestGunMod
             if (Gun == null || ReloadController == null)
                 return false;
 
-            return Gun.CanFire && Gun.PowderCharges > 0;
+            return Gun.CanFire;
         }
 
         public void TriggerUnload()
         {
             if (!IsReady())
             {
-                MelonLogger.Msg($"[GunUnloadHandler:{Label}] Not ready — gun must be loaded and fireable.");
+                MelonLogger.Msg($"[GunUnloadHandler:{Label}] Not ready — gun must be able to fire.");
                 return;
             }
 
-            // Capture everything BEFORE resetting anything.
-            int chargesBeforeUnload = Gun.PowderCharges;
+            int chargesBeforeUnload = GetBestChargeCount();
+
             ShellBlueprint chamberedBlueprint = null;
             try { chamberedBlueprint = Gun.ChamberedShellBlueprint; }
             catch (Exception e)
@@ -52,6 +58,8 @@ namespace IronNestGunMod
                 MelonLogger.Msg($"[GunUnloadHandler:{Label}] Reading ChamberedShellBlueprint threw: {e}");
             }
             ShellDefinition shellDef = ExtractShellDefinition(chamberedBlueprint);
+
+            MelonLogger.Msg($"[GunUnloadHandler:{Label}] Unloading with chargesBeforeUnload={chargesBeforeUnload} (Gun.PowderCharges={Gun.PowderCharges}, PowderController.currentSelectedCharges={PowderController?.currentSelectedCharges}).");
 
             try { ReloadController.ForceResetStateToInitial(); }
             catch (Exception e)
@@ -77,11 +85,8 @@ namespace IronNestGunMod
                 MelonLogger.Msg($"[GunUnloadHandler:{Label}] SetPowderCharge(0) threw: {e}");
             }
 
-            try { Gun.ForcePendingReload(); }
-            catch (Exception e)
-            {
-                MelonLogger.Msg($"[GunUnloadHandler:{Label}] ForcePendingReload threw: {e}");
-            }
+            try { Gun.pendingReload = true; } catch (Exception e) { MelonLogger.Msg($"[GunUnloadHandler:{Label}] Setting pendingReload=true threw: {e}"); }
+            try { Gun.hasFired = false; } catch (Exception e) { MelonLogger.Msg($"[GunUnloadHandler:{Label}] Setting hasFired=false threw: {e}"); }
 
             try { Gun.ResetElevation(); }
             catch (Exception e)
@@ -98,9 +103,16 @@ namespace IronNestGunMod
                 catch (Exception e) { MelonLogger.Msg($"[GunUnloadHandler:{Label}] ResetAll threw: {e}"); }
             }
 
-            MelonLogger.Msg($"[GunUnloadHandler:{Label}] Reset triggered. Waiting {ResetAnimationDuration}s for the animation before returning shell/powder...");
+            MelonLogger.Msg($"[GunUnloadHandler:{Label}] Reset triggered. pendingReload={Gun.pendingReload}. Waiting {ResetAnimationDuration}s...");
 
             MelonCoroutines.Start(FinishUnloadAfterAnimation(chargesBeforeUnload, shellDef));
+        }
+
+        private int GetBestChargeCount()
+        {
+            int fromController = PowderController != null ? PowderController.currentSelectedCharges : 0;
+            int fromGun = Gun.PowderCharges;
+            return Math.Max(fromController, fromGun);
         }
 
         private IEnumerator FinishUnloadAfterAnimation(int chargesBeforeUnload, ShellDefinition shellDef)
@@ -108,7 +120,7 @@ namespace IronNestGunMod
             yield return new WaitForSeconds(ResetAnimationDuration);
 
             string afterKey = ReloadController.CurrentState?.stateKey ?? "NULL";
-            MelonLogger.Msg($"[GunUnloadHandler:{Label}] Animation finished. state='{afterKey}' CanFire={Gun.CanFire} elevation={Gun.CurrentElevation}");
+            MelonLogger.Msg($"[GunUnloadHandler:{Label}] Animation finished. state='{afterKey}' elevation={Gun.CurrentElevation}");
 
             if (ShellSelector != null && shellDef != null)
             {
@@ -130,7 +142,7 @@ namespace IronNestGunMod
             bool fullRecovery = UnityEngine.Random.Range(0f, 1f) < 0.43f;
             int chargesToRestore = fullRecovery ? chargesBeforeUnload : Mathf.Max(0, chargesBeforeUnload - 1);
 
-            if (PowderChargeInventory.Instance != null)
+            if (PowderChargeInventory.Instance != null && chargesBeforeUnload > 0)
             {
                 if (fullRecovery)
                 {
@@ -143,6 +155,18 @@ namespace IronNestGunMod
                     MelonLogger.Msg($"[GunUnloadHandler:{Label}] Lost 1 charge, recovered {chargesToRestore}/{chargesBeforeUnload}.");
                 }
             }
+            else
+            {
+                MelonLogger.Msg($"[GunUnloadHandler:{Label}] No powder charges to restore (chargesBeforeUnload={chargesBeforeUnload}).");
+            }
+
+            try { Gun.pendingReload = false; }
+            catch (Exception e)
+            {
+                MelonLogger.Msg($"[GunUnloadHandler:{Label}] Resetting pendingReload=false threw: {e}");
+            }
+
+            MelonLogger.Msg($"[GunUnloadHandler:{Label}] Unload fully complete. pendingReload={Gun.pendingReload} CanFire={Gun.CanFire}. Gun is reusable.");
         }
 
         private ShellDefinition ExtractShellDefinition(ShellBlueprint blueprint)
