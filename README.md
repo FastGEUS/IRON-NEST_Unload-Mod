@@ -10,7 +10,7 @@ The core unload process works, but a few issues still need to be fixed before th
 
 - ✅ ~~Reloading a second time after an unload was broken~~
 - ✅ ~~Unloading desynced the powder charge calculation, breaking shell range~~
-- ⬜ Left gun can't be unloaded while the right gun is ready to fire or mid-unload
+- ✅ ~~Left gun can't be unloaded while the right gun is ready to fire or mid-unload~~
 
 ---
 
