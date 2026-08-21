@@ -22,7 +22,7 @@ By default, once a shell and powder charge are loaded into a gun, the only way t
 ## Features
 
 - **Per-gun unload**, fully independent — unloading the left gun has no effect on the right gun's state or timing, and vice versa.
-- **Keyboard-only hotkeys** — deliberately *not* mouse-clickable buttons. See [Why no clickable buttons?](#why-no-clickable-buttons) below.
+- **Keyboard-only hotkeys** — deliberately *not* mouse-clickable buttons.
 - **User-remappable hotkeys** via a plain-text config file — no recompiling, no code editing.
 - **Realistic unload behavior**: triggers the gun's own ~12 second reset animation, then returns the shell to the cylinder and rolls a chance to fully recover the powder charge (partial loss otherwise) — see [Unload mechanics](#unload-mechanics).
 - **Duplicate-click / duplicate-hotkey safe** — pressing the hotkey again while a gun is already mid-unload is ignored (logged, not crashed).
@@ -89,13 +89,8 @@ Pressing a gun's hotkey while it is loaded and able to fire:
 
 While a gun is mid-unload, its hotkey is ignored if pressed again (no stacking/duplicate unloads), and its charge state is not touched by the mod's background sync until the sequence completes.
 
-## Why no clickable buttons?
-
-Earlier builds used on-screen `OnGUI` buttons. During real gameplay, the game locks and hides the system cursor while the player is aiming a turret (`Cursor.lockState == Locked`), which causes Unity to report the mouse position as an off-screen sentinel value. Under that condition, **no on-screen button can ever register a click** — confirmed by diagnostic logging during development. Since aiming is the normal state during play, buttons were unreliable in exactly the situations where the mod is most useful. Keyboard hotkeys have no such limitation, so the mod is now keyboard-only, with a plain on-screen text hint (not a button) showing current bindings.
-
 ## Known limitations / roadmap
 
-- Currently supports exactly two guns per turret, matched by `"Left"` / `"Right"` in their in-game object name. Additional guns without either substring in their name are still unloaded correctly but currently share no dedicated hotkey slot.
 - The reset animation duration and powder-recovery odds are fixed constants for now (see `ModConfig`); not yet user-configurable.
 - No BepInEx build yet — MelonLoader only for now.
 - Reload/unload debug logging is currently verbose (every step logs success or failure) to aid ongoing bug-fixing; will be trimmed down for a quieter default in a future release.
@@ -107,7 +102,6 @@ Earlier builds used on-screen `OnGUI` buttons. During real gameplay, the game lo
 
 **Other ideas I'm considering (no promises):**
 - Configurable unload duration and recovery odds, instead of hardcoded constants.
-- Support for turrets with more than 2 guns, with hotkeys assignable per gun rather than just Left/Right.
 - Some kind of sound or flash when unload starts/completes, since there's no button to visually "press" anymore.
 - A "quiet mode" log setting to cut the verbose per-step logging down for players who never hit issues.
 - A startup self-check that warns clearly if a game update changed something the mod depends on, instead of failing with a raw exception.
@@ -147,7 +141,7 @@ Developed by Svet — my first mod, so please go easy on me. Built against Melon
 ## Возможности
 
 - **Разряд каждого орудия по отдельности**, полностью независимо — разряд левого орудия никак не влияет на состояние или таймер правого, и наоборот.
-- **Только клавиатурные горячие клавиши** — намеренно без кликабельных кнопок мышью. Почему — смотри раздел ниже.
+- **Только клавиатурные горячие клавиши** — намеренно без кликабельных кнопок мышью.
 - **Горячие клавиши можно переназначить** через обычный текстовый конфиг-файл — без перекомпиляции и правки кода.
 - **Реалистичное поведение разряда**: запускает настоящую ~12-секундную анимацию сброса орудия, затем возвращает снаряд в барабан и с некоторым шансом полностью восстанавливает заряд пороха (иначе — частичная потеря).
 - **Защита от повторных нажатий** — если нажать горячую клавишу ещё раз, пока орудие уже разряжается, нажатие просто игнорируется (с записью в лог, без падения мода).
@@ -214,13 +208,8 @@ ToggleHintKey = Digit0
 
 Пока орудие разряжается, повторное нажатие его горячей клавиши игнорируется (без накопления/дублирования разряда), а фоновая синхронизация заряда мода не трогает его состояние до завершения всей последовательности.
 
-## Почему без кликабельных кнопок?
-
-В более ранних версиях использовались кнопки `OnGUI` на экране. Во время реальной игры игра блокирует и скрывает системный курсор, когда игрок прицеливается турелью (`Cursor.lockState == Locked`), из-за чего Unity сообщает позицию мыши как служебное значение за пределами экрана. В этом состоянии **никакая кнопка на экране не может зарегистрировать клик** — это подтверждено диагностическим логированием во время разработки. Поскольку прицеливание — обычное состояние во время игры, кнопки были ненадёжны именно в тех ситуациях, где мод нужнее всего. У клавиатурных горячих клавиш такого ограничения нет, поэтому теперь мод работает только через клавиатуру, а на экране осталась простая текстовая подсказка (не кнопка) с текущими биндами.
-
 ## Известные ограничения / планы
 
-- Сейчас поддерживаются ровно два орудия на турель, определяемые по подстроке `"Left"` / `"Right"` в имени объекта в игре. Дополнительные орудия без этих подстрок в имени всё равно корректно разряжаются, но пока не имеют отдельного слота горячей клавиши.
 - Длительность анимации сброса и шанс восстановления пороха сейчас — фиксированные константы (см. `ModConfig`), пока не настраиваются пользователем.
 - Сборки для BepInEx пока нет — только MelonLoader.
 - Отладочное логирование разряда сейчас подробное (каждый шаг логирует успех или ошибку) — это помогает в текущей отладке багов, в будущем релизе будет приглушено по умолчанию.
@@ -232,7 +221,6 @@ ToggleHintKey = Digit0
 
 **Другие идеи на будущее (без обещаний):**
 - Настраиваемая длительность разряда и шанс восстановления вместо жёстких констант.
-- Поддержка турелей с более чем 2 орудиями, с горячими клавишами не только для Left/Right.
 - Звук или вспышка при начале/завершении разряда, раз кнопки для "нажатия" больше нет.
 - "Тихий режим" логирования для игроков, у которых всё работает без проблем.
 - Проверка совместимости при запуске, которая явно предупредит, если обновление игры изменило что-то, от чего зависит мод, вместо падения с голым исключением.
