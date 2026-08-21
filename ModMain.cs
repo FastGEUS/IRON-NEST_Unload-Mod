@@ -1,6 +1,6 @@
 using MelonLoader;
 
-[assembly: MelonInfo(typeof(IronNestGunMod.ModMain), "Per-Gun Unload Buttons", "0.1.0", "Svet")]
+[assembly: MelonInfo(typeof(IronNestGunMod.ModMain), "Unload Mod", "2.0-beta", "Svet")]
 [assembly: MelonGame("Iron Nest", "Iron Nest Heavy Turret Simulator")]
 
 namespace IronNestGunMod
@@ -11,7 +11,7 @@ namespace IronNestGunMod
 
         public override void OnInitializeMelon()
         {
-            LoggerInstance.Msg("Per-Gun Unload Buttons mod loaded.");
+            LoggerInstance.Msg("Unload mod loaded.");
         }
 
         public override void OnSceneWasLoaded(int buildIndex, string sceneName)
