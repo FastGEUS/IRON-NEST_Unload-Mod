@@ -22,7 +22,7 @@ namespace IronNestGunMod
     /// </summary>
     public static class HotkeyConfig
     {
-        private const string CategoryId = "PerGunUnloadButtons";
+        private const string CategoryId = "UnloadButtons";
         private const string CategoryDisplayName = "Per-Gun Unload Buttons - Hotkeys";
 
         private const string DefaultLeftKey = "Digit8";
